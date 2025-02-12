@@ -1,4 +1,4 @@
-// energometer 12.2.2025 -15:08
+// energometer 12.2.2025 -16:01
 //   _____                                                                    
 //  /  __ \                                                                   
 //  | /  \/ _   _   ___  _ __    ___                                          
@@ -27,6 +27,8 @@ char mqtt_server[40];  // MQTT server
 char mqtt_port[6];     // MQTT port
 char mqtt_user[40];    // MQTT používateľ
 char mqtt_password[40];// MQTT heslo
+char mqtt_topic_power[40];  // MQTT téma pre výkon
+char mqtt_topic_pulses[40]; // MQTT téma pre impulzy
 
 // Korekčný faktor pre výpočet výkonu
 float correction_factor = 1.0;  // Predvolená hodnota (žiadna korekcia)
@@ -112,6 +114,8 @@ void handleConfig() {
     strncpy(mqtt_port, server.arg("port").c_str(), sizeof(mqtt_port));
     strncpy(mqtt_user, server.arg("user").c_str(), sizeof(mqtt_user));
     strncpy(mqtt_password, server.arg("password").c_str(), sizeof(mqtt_password));
+    strncpy(mqtt_topic_power, server.arg("topic_power").c_str(), sizeof(mqtt_topic_power));
+    strncpy(mqtt_topic_pulses, server.arg("topic_pulses").c_str(), sizeof(mqtt_topic_pulses));
 
     // Presmerovanie späť na hlavnú stránku
     server.sendHeader("Location", "/");
@@ -125,6 +129,8 @@ void handleConfig() {
     html += "Port: <input type='text' name='port' value='" + String(mqtt_port) + "'><br>";
     html += "Používateľ: <input type='text' name='user' value='" + String(mqtt_user) + "'><br>";
     html += "Heslo: <input type='password' name='password' value='" + String(mqtt_password) + "'><br>";
+    html += "Téma pre výkon: <input type='text' name='topic_power' value='" + String(mqtt_topic_power) + "'><br>";
+    html += "Téma pre impulzy: <input type='text' name='topic_pulses' value='" + String(mqtt_topic_pulses) + "'><br>";
     html += "<input type='submit' value='Uložiť'>";
     html += "</form>";
     html += "</body></html>";
@@ -176,11 +182,15 @@ void setup() {
   WiFiManagerParameter custom_mqtt_port("port", "MQTT Port", mqtt_port, 6);
   WiFiManagerParameter custom_mqtt_user("user", "MQTT Používateľ", mqtt_user, 40);
   WiFiManagerParameter custom_mqtt_password("password", "MQTT Heslo", mqtt_password, 40);
+  WiFiManagerParameter custom_mqtt_topic_power("topic_power", "MQTT Téma pre výkon", mqtt_topic_power, 40);
+  WiFiManagerParameter custom_mqtt_topic_pulses("topic_pulses", "MQTT Téma pre impulzy", mqtt_topic_pulses, 40);
 
   wifiManager.addParameter(&custom_mqtt_server);
   wifiManager.addParameter(&custom_mqtt_port);
   wifiManager.addParameter(&custom_mqtt_user);
   wifiManager.addParameter(&custom_mqtt_password);
+  wifiManager.addParameter(&custom_mqtt_topic_power);
+  wifiManager.addParameter(&custom_mqtt_topic_pulses);
 
   // Ak sa nepodarí pripojiť k uloženej sieti, spustí sa režim AP (Access Point)
   if (!wifiManager.autoConnect("ESP8266-Config")) {
@@ -194,6 +204,8 @@ void setup() {
   strncpy(mqtt_port, custom_mqtt_port.getValue(), sizeof(mqtt_port));
   strncpy(mqtt_user, custom_mqtt_user.getValue(), sizeof(mqtt_user));
   strncpy(mqtt_password, custom_mqtt_password.getValue(), sizeof(mqtt_password));
+  strncpy(mqtt_topic_power, custom_mqtt_topic_power.getValue(), sizeof(mqtt_topic_power));
+  strncpy(mqtt_topic_pulses, custom_mqtt_topic_pulses.getValue(), sizeof(mqtt_topic_pulses));
 
   // Ak sa pripojenie podarí
   Serial.println("WiFi pripojene");
@@ -203,6 +215,9 @@ void setup() {
   // Inicializácia mDNS
   if (MDNS.begin("esp8266")) {  // Hostname: esp8266.local
     Serial.println("mDNS spustené. Prístupná adresa: http://esp8266.local");
+    // Pridanie informácií o MQTT témach do mDNS
+    MDNS.addServiceTxt("http", "tcp", "mqtt_topic_power", mqtt_topic_power);
+    MDNS.addServiceTxt("http", "tcp", "mqtt_topic_pulses", mqtt_topic_pulses);
   } else {
     Serial.println("Chyba pri spustení mDNS!");
   }
@@ -231,12 +246,12 @@ void loop() {
       // Poslať aktuálny výkon
       char power_str[10];
       dtostrf(power[i], 6, 2, power_str);
-      client.publish(("testenergy/power" + String(i + 1)).c_str(), power_str);
+      client.publish((String(mqtt_topic_power) + String(i + 1)).c_str(), power_str);
 
       // Poslať celkový počet impulzov
       char pulses_str[20];
       sprintf(pulses_str, "%lu", pulse_count[i]);
-      client.publish(("testenergy/pulses" + String(i + 1)).c_str(), pulses_str);
+      client.publish((String(mqtt_topic_pulses) + String(i + 1)).c_str(), pulses_str);
     }
     last_send_time = millis();
   }
