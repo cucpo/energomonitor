@@ -1,4 +1,3 @@
-// energometer 12.2.2025 -16:01
 //   _____                                                                    
 //  /  __ \                                                                   
 //  | /  \/ _   _   ___  _ __    ___                                          
@@ -14,7 +13,6 @@
 //  | |___ | | | ||  __/| |   | (_| || (_) || | | | | ||  __/| |_ |  __/| |   
 //  \____/ |_| |_| \___||_|    \__, | \___/ |_| |_| |_| \___| \__| \___||_|   
 //                              __/ |                                         
-//  
 
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -27,8 +25,8 @@ char mqtt_server[40];  // MQTT server
 char mqtt_port[6];     // MQTT port
 char mqtt_user[40];    // MQTT používateľ
 char mqtt_password[40];// MQTT heslo
-char mqtt_topic_power[40];  // MQTT téma pre výkon
-char mqtt_topic_pulses[40]; // MQTT téma pre impulzy
+char mqtt_topic_power[40];  // MQTT topic pre výkon
+char mqtt_topic_pulses[40]; // MQTT topic pre impulzy
 
 // Korekčný faktor pre výpočet výkonu
 float correction_factor = 1.0;  // Predvolená hodnota (žiadna korekcia)
@@ -129,8 +127,8 @@ void handleConfig() {
     html += "Port: <input type='text' name='port' value='" + String(mqtt_port) + "'><br>";
     html += "Používateľ: <input type='text' name='user' value='" + String(mqtt_user) + "'><br>";
     html += "Heslo: <input type='password' name='password' value='" + String(mqtt_password) + "'><br>";
-    html += "Téma pre výkon: <input type='text' name='topic_power' value='" + String(mqtt_topic_power) + "'><br>";
-    html += "Téma pre impulzy: <input type='text' name='topic_pulses' value='" + String(mqtt_topic_pulses) + "'><br>";
+    html += "Topic pre výkon: <input type='text' name='topic_power' value='" + String(mqtt_topic_power) + "'><br>";
+    html += "Topic pre impulzy: <input type='text' name='topic_pulses' value='" + String(mqtt_topic_pulses) + "'><br>";
     html += "<input type='submit' value='Uložiť'>";
     html += "</form>";
     html += "</body></html>";
@@ -182,8 +180,8 @@ void setup() {
   WiFiManagerParameter custom_mqtt_port("port", "MQTT Port", mqtt_port, 6);
   WiFiManagerParameter custom_mqtt_user("user", "MQTT Používateľ", mqtt_user, 40);
   WiFiManagerParameter custom_mqtt_password("password", "MQTT Heslo", mqtt_password, 40);
-  WiFiManagerParameter custom_mqtt_topic_power("topic_power", "MQTT Téma pre výkon", mqtt_topic_power, 40);
-  WiFiManagerParameter custom_mqtt_topic_pulses("topic_pulses", "MQTT Téma pre impulzy", mqtt_topic_pulses, 40);
+  WiFiManagerParameter custom_mqtt_topic_power("topic_power", "MQTT Topic pre výkon", mqtt_topic_power, 40);
+  WiFiManagerParameter custom_mqtt_topic_pulses("topic_pulses", "MQTT Topic pre impulzy", mqtt_topic_pulses, 40);
 
   wifiManager.addParameter(&custom_mqtt_server);
   wifiManager.addParameter(&custom_mqtt_port);
